@@ -102,7 +102,12 @@ export default class ProductCenter extends React.Component {
           if (video) {
             const content = (
               <div className="tableInlineImg">
-                <video width="100%" height="100%" src={video} controls>
+                <video
+                  style={{ width: "100%" }}
+                  height="100%"
+                  src={video}
+                  controls
+                >
                   Your browser does not support HTML5 video.
                 </video>
               </div>
@@ -146,7 +151,12 @@ export default class ProductCenter extends React.Component {
             } else {
               content = (
                 <div className="tableInlineImg">
-                  <video width="100%" height="100%" src={url} controls>
+                  <video
+                    style={{ width: "100%" }}
+                    height="100%"
+                    src={url}
+                    controls
+                  >
                     Your browser does not support HTML5 video.
                   </video>
                 </div>
@@ -182,7 +192,9 @@ export default class ProductCenter extends React.Component {
       tecVisible: false,
       tableList: [],
       tecShow: false,
-      goodsName: ""
+      goodsName: "",
+      editVisible: false,
+      defaultValue: []
     };
   }
 
@@ -213,8 +225,6 @@ export default class ProductCenter extends React.Component {
       });
   };
 
-  onEdit = record => {};
-
   operate = (e, record, index) => {
     return (
       <span>
@@ -225,7 +235,11 @@ export default class ProductCenter extends React.Component {
         >
           添加技术参数
         </a>
-        <a href="javascript:void(0)" onClick={this.onEdit.bind(this, record)}>
+        <a
+          href="javascript:void(0)"
+          onClick={this.onEdit.bind(this, record)}
+          style={{ marginRight: "10px" }}
+        >
           编辑
         </a>
         <Popconfirm
@@ -322,18 +336,9 @@ export default class ProductCenter extends React.Component {
   };
 
   showNewForm = () => {
-    // const formData = new FormData();
-    // formData.append("username", "Groucho", "application/octet-stream");
-    // baseReq('/boss/addGoods', formData)
-    //   .then(res => {
-    //     console.log('$PARANSres', res)
-    //   })
-    //   .catch(err => {
-    //     message.error(err);
-    //   });
-
     this.setState({
-      newVisible: true
+      newVisible: true,
+      featureContent: []
     });
   };
 
@@ -342,21 +347,44 @@ export default class ProductCenter extends React.Component {
       newVisible: false,
       tecVisible: false,
       formLoading: false,
-      tecShow: false
+      tecShow: false,
+      editVisible: false
     });
-    if (tec === "tec") {
-      this.refs.tec.resetFields();
+    switch (tec) {
+      case "tec":
+        this.refs.tec.resetFields();
+        break;
+      case "new":
+        window.document.getElementById("reset").click();
+        break;
+      case "edit":
+        // window.document.getElementById("reset1").click();
+        break;
+      default:
+        break;
     }
-    window.document.getElementById("reset").click();
   };
 
   add = () => {
     const { featureContent } = this.state;
     featureContent.push(
-      <p className="formItem">
-        <input type="text" name="advantage" placeholder="请输入产品特点" />
+      <p className="formItem" key={`featureContent-${featureContent.length}`}>
+        <input
+          style={{ width: "100%" }}
+          type="text"
+          name="advantage"
+          placeholder="请输入产品特点"
+        />
       </p>
     );
+    this.setState({
+      featureContent
+    });
+  };
+
+  minus = () => {
+    const { featureContent } = this.state;
+    featureContent.pop();
     this.setState({
       featureContent
     });
@@ -383,12 +411,62 @@ export default class ProductCenter extends React.Component {
         console.log("$PARANSres", res);
         message.success("添加成功");
         window.document.getElementById("reset").click();
-        this.handleCancel();
+        this.handleCancel("new");
         this.getData(1);
       })
       .catch(err => {
         message.error(err);
       });
+  };
+
+  onEdit = record => {
+    const featureContent = [];
+    if (record.advantage && JSON.parse(record.advantage.length) > 0) {
+      JSON.parse(record.advantage).forEach((item, index) => {
+        featureContent.push(
+          <p className="formItem" key={index}>
+            <input
+              style={{ width: "100%" }}
+              type="text"
+              name="advantage"
+              placeholder="请输入产品特点"
+              defaultValue={item}
+            />
+          </p>
+        );
+      });
+    }
+    this.setState({
+      defaultValue: record,
+      editVisible: true,
+      featureContent
+    });
+  };
+
+  update = () => {
+    const { defaultValue } = this.state;
+    const form = window.document.getElementById("editForm");
+    const formdata = new FormData(form);
+    formdata.append("gid", defaultValue.gid);
+    console.log("$PARANSformdata", formdata);
+    baseReq("/boss/updateGoods", formdata)
+      .then(res => {
+        console.log("$PARANSres", res);
+        message.success("更新成功");
+        this.handleCancel("edit");
+        this.getData(1);
+      })
+      .catch(err => {
+        message.error(err);
+      });
+  };
+
+  onChange = (e, name) => {
+    const { defaultValue } = this.state;
+    defaultValue[name] = e.target.value;
+    this.setState({
+      defaultValue
+    });
   };
 
   render() {
@@ -398,7 +476,8 @@ export default class ProductCenter extends React.Component {
       featureContent,
       type2,
       tableList,
-      goodsName
+      goodsName,
+      defaultValue
     } = this.state;
     return (
       <div className="contentContainer">
@@ -421,7 +500,9 @@ export default class ProductCenter extends React.Component {
         <Modal
           title="产品表单"
           visible={this.state.newVisible}
-          onCancel={this.handleCancel}
+          onCancel={() => {
+            this.handleCancel("new");
+          }}
           onOk={this.pushNew}
         >
           <form id="newForm" encType="multipart/form-data">
@@ -480,17 +561,27 @@ export default class ProductCenter extends React.Component {
                 type="text"
                 name="goodsRange"
                 placeholder="请输入产品使用范围"
+                style={{ width: "100%" }}
               />
             </p>
             <p className="formItem">
               产品特点：<input type="text" name="feature" placeholder="请输入产品特点" />
             </p>
             <p className="formItem">
-              产品优势：<a href="javascript:void(0)" onClick={this.add}>
+              产品优势：
+              <a href="javascript:void(0)" onClick={this.add}>
                 <Icon type="plus" />
               </a>
+              <a href="javascript:void(0)" onClick={this.minus}>
+                <Icon type="minus" />
+              </a>
               <p className="formItem">
-                <input type="text" name="advantage" placeholder="请输入产品特点" />
+                <input
+                  style={{ width: "100%" }}
+                  type="text"
+                  name="advantage"
+                  placeholder="请输入产品特点"
+                />
               </p>
               {featureContent}
             </p>
@@ -530,6 +621,211 @@ export default class ProductCenter extends React.Component {
           onCancel={this.handleCancel}
         >
           <TecTable tableList={tableList} goodsName={goodsName} />
+        </Modal>
+        <Modal
+          title="编辑产品"
+          visible={this.state.editVisible}
+          onCancel={this.handleCancel.bind(null, "edit")}
+          onOk={this.update}
+        >
+          <form id="editForm" encType="multipart/form-data">
+            <div className="formItem">
+              产品名：<input
+                onChange={e => {
+                  this.onChange(e, "goodsName");
+                }}
+                type="text"
+                name="goodsName"
+                placeholder="请输入产品名"
+                value={defaultValue.goodsName}
+              />
+            </div>
+            <div className="formItem" id="type1">
+              产品操作方式：
+              <select
+                name="type1"
+                onChange={e => {
+                  this.onChange(e, "type1");
+                }}
+                value={defaultValue.type1}
+              >
+                <option value="手推式">手推式</option>
+                <option value="驾驶式">驾驶式</option>
+              </select>
+            </div>
+            <div className="formItem">
+              产品类型：
+              {defaultValue.type1 === "手推式"
+                ? <select
+                    onChange={e => {
+                      this.onChange(e, "type2");
+                    }}
+                    name="type2"
+                    value={defaultValue.type2}
+                  >
+                    <option value="小型（1470-1650）m²/h">
+                      小型 (1470-1650）m²/h
+                    </option>
+                    <option value="中型（1750-2640）m²/h">
+                      中型 (1750-2640）m²/h
+                    </option>
+                    <option value="多功能（650-1100）m²/h">
+                      多功能 (650-1100）m²/h
+                    </option>
+                    <option value="多功能（650-840）m²/h">多功能（650-840）m²/h</option>
+                  </select>
+                : <select
+                    onChange={e => {
+                      this.onChange(e, "type2");
+                    }}
+                    name="type2"
+                    value={defaultValue.type2}
+                  >
+                    <option value="小型（2500-3200）m²/h">小型（2500-3200）m²/h</option>
+                    <option value="中型（3900-5100）m²/h">中型（3900-5100）m²/h</option>
+                    <option value="中型（4500-7000）m²/h">中型（4500-7000）m²/h</option>
+                    <option value="大型（6000-7000）m²/h">大型（6000-7000）m²/h</option>
+                  </select>}
+            </div>
+            <div className="formItem">
+              产品型号：<input
+                onChange={e => {
+                  this.onChange(e, "model");
+                }}
+                type="text"
+                name="model"
+                placeholder="请输入产品型号"
+                value={defaultValue.model}
+              />
+            </div>
+            <div className="formItem">
+              产品功率：<input
+                onChange={e => {
+                  this.onChange(e, "power");
+                }}
+                type="text"
+                name="power"
+                placeholder="请输入产品功率"
+                value={defaultValue.power}
+              />
+            </div>
+            <div className="formItem">
+              产品系列：<select
+                onChange={e => {
+                  this.onChange(e, "catId");
+                }}
+                name="catId"
+                value={defaultValue.catId}
+              >
+                <option value={1}>Tornado系列扫地机</option>
+                <option value={2}>Dragoon系列洗地机</option>
+                <option value={3}>Ranger系列洗地机</option>
+                <option value={4}>Hussar系列洗地机</option>
+                <option value={5}>Clever系列洗地机</option>
+                <option value={6}>Smart系列洗地机</option>
+                <option value={7}>PX系列抛光机</option>
+                <option value={8}>SPX系列抛光机</option>
+              </select>
+            </div>
+            <div className="formItem">
+              产品使用范围：<input
+                onChange={e => {
+                  this.onChange(e, "goodsRange");
+                }}
+                type="text"
+                name="goodsRange"
+                placeholder="请输入产品使用范围"
+                value={defaultValue.goodsRange}
+                style={{ width: "100%" }}
+              />
+            </div>
+            <div className="formItem">
+              产品特点：<input
+                onChange={e => {
+                  this.onChange(e, "feature");
+                }}
+                type="text"
+                name="feature"
+                placeholder="请输入产品特点"
+                value={defaultValue.feature}
+              />
+            </div>
+            <div className="formItem">
+              产品优势：
+              <a href="javascript:void(0)" onClick={this.add}>
+                <Icon type="plus" />
+              </a>
+              <a href="javascript:void(0)" onClick={this.minus}>
+                <Icon type="minus" />
+              </a>
+              {featureContent}
+            </div>
+            <div className="formItem">
+              产品操作说明：
+              <div
+                style={{ width: "100px", height: "100px", overflow: "hidden" }}
+              >
+                已有图片
+                <img src={defaultValue.instruction} />
+              </div>
+              <div>
+                如需更换图片请重新上传
+                <input type="file" name="fileInstructionUrl" />
+              </div>
+            </div>
+            <div className="formItem">
+              产品主图片：
+              <div
+                style={{ width: "100px", height: "100px", overflow: "hidden" }}
+              >
+                已有图片
+                <img src={defaultValue.imgUrl} />
+              </div>
+              <div>
+                如需更换图片请重新上传
+                <input type="file" name="fileImgUrl" />
+              </div>
+            </div>
+            <div className="formItem">
+              产品操作讲解视频：
+              <div
+                style={{ width: "100px", height: "100px", overflow: "hidden" }}
+              >
+                已有视频
+                <video
+                  width="100%"
+                  height="100%"
+                  src={defaultValue.videoUrl}
+                  controls
+                >
+                  Your browser does not support HTML5 video.
+                </video>
+              </div>
+              <div>
+                如需更换图片请重新上传
+                <input type="file" name="fileVideoUrl" />
+              </div>
+            </div>
+            <div className="formItem">
+              案例信息：
+              <div
+                style={{ width: "100px", height: "100px", overflow: "hidden" }}
+              >
+                已有图片
+                <img src={defaultValue.application} />
+              </div>
+              <div>
+                如需更换图片请重新上传
+                <input type="file" name="fileApplicationUrl" />
+              </div>
+            </div>
+            {/*<input*/}
+            {/*style={{display: "none"}}*/}
+            {/*id="reset"*/}
+            {/*type="reset"*/}
+            {/*value="Reset"*/}
+            {/*/>*/}
+          </form>
         </Modal>
       </div>
     );

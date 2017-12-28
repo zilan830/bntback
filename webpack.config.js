@@ -100,7 +100,7 @@ module.exports = {
     ]
   },
   devServer: {
-    port: 8040,
+    port: 8050,
     host: "localhost",
     contentBase: path.resolve(__dirname, "dist"),
     // 输出文件的路径
