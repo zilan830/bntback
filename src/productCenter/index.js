@@ -348,7 +348,8 @@ export default class ProductCenter extends React.Component {
       tecVisible: false,
       formLoading: false,
       tecShow: false,
-      editVisible: false
+      editVisible: false,
+      featureContent: []
     });
     switch (tec) {
       case "tec":
@@ -421,8 +422,10 @@ export default class ProductCenter extends React.Component {
 
   onEdit = record => {
     const featureContent = [];
+    console.log("$PARANSrecord", record.advantage);
     if (record.advantage && JSON.parse(record.advantage.length) > 0) {
       JSON.parse(record.advantage).forEach((item, index) => {
+        console.log("$PARANSitem", item);
         featureContent.push(
           <p className="formItem" key={index}>
             <input
@@ -436,6 +439,7 @@ export default class ProductCenter extends React.Component {
         );
       });
     }
+    console.log("$PARANSfeatureContent", featureContent);
     this.setState({
       defaultValue: record,
       editVisible: true,
@@ -479,6 +483,7 @@ export default class ProductCenter extends React.Component {
       goodsName,
       defaultValue
     } = this.state;
+    console.log("$PARANSfeatureContent.....", featureContent);
     return (
       <div className="contentContainer">
         <Button className="mb10" onClick={this.showNewForm}>
@@ -520,15 +525,9 @@ export default class ProductCenter extends React.Component {
               产品类型：
               {type2 === 1
                 ? <select name="type2">
-                    <option value="小型 (1470-1650）m²/h">
-                      小型 (1470-1650）m²/h
-                    </option>
-                    <option value="中型 (1750-2640）m²/h">
-                      中型 (1750-2640）m²/h
-                    </option>
-                    <option value="多功能（650-1100）m²/h">
-                      多功能 (650-1100）m²/h
-                    </option>
+                    <option value="小型（1470-1650）m²/h">小型（1470-1650）m²/h</option>
+                    <option value="中型（1750-2640）m²/h">中型（1750-2640）m²/h</option>
+                    <option value="多功能（650-1100）m²/h">多功能（650-1100）m²/h</option>
                     <option value="多功能（650-840）m²/h">多功能（650-840）m²/h</option>
                   </select>
                 : <select name="type2">
